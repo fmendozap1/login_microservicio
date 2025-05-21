@@ -8,18 +8,17 @@ const crear = async (req, res) => {
   let parametros = req.body;
 
   try {
-
-     //Encripta la contraseña
+    //Encripta la contraseña
     const password_cifrado = await bcrypt.hash(parametros.password_usuario, 10);
 
-    const [usuario,creado] = await Usuarios.findOrCreate({
+    const [usuario, creado] = await Usuarios.findOrCreate({
       where: {
         [Op.or]: [
-          { num_identificacion_usuario: num_id },
-          { email_usuario: email },
+          { num_identificacion_usuario: parametros.num_identificacion_usuario },
+          { email_usuario: parametros.email_usuario },
         ],
       },
-      default: {
+      defaults: {
         nombres_usuario: parametros.nombres_usuario,
         tipo_identificacion_usuario: parametros.tipo_identificacion_usuario,
         num_identificacion_usuario: parametros.num_identificacion_usuario,
@@ -37,14 +36,13 @@ const crear = async (req, res) => {
       });
     }
 
-
     // Respuesta exitosa
     return res.status(200).json({
       status: "Proceso Exitoso",
       message: "Usuario Registrado Satisfactoriamente",
       user: {
-        nombres: usuario_nuevo.nombres_usuario,
-        email: usuario_nuevo.email_usuario,
+        nombres: usuario.nombres_usuario,
+        email: usuario.email_usuario,
       },
     });
   } catch (error) {
@@ -57,36 +55,58 @@ const crear = async (req, res) => {
   }
 };
 
-const login = (req, res) => {
-  let params = req.body;
-  let user;
+const login = async (req, res) => {
+  let parametros = req.body;
 
-  User.findOne({ email: params.email, status: 1 })
-    .exec()
-    .then((result) => {
-      if (!result) {
-        return res.status(404).json({
-          status: "Error",
-          message: "User Not Found",
-        });
-      }
-      let pwd = bcrypt.compareSync(params.password, result.password);
-      if (!pwd) {
-        return res.status(401).json({
-          status: "Error",
-          message: "Invalid Username or Password",
-        });
-      } else {
-        user = result;
-        const token = jwt.createToken(user);
-        return res.status(200).json({
-          status: "Success",
-          message: "Login Successful",
-          user: user.email,
-          token,
-        });
-      }
+  try {
+    const usuario_buscado = await Usuarios.findOne({
+      where: {
+        email_usuario: parametros.email_usuario,
+      },
     });
+
+    if (!usuario_buscado) {
+      return res.status(404).json({
+        status: "Error",
+        message: "User Not Found",
+      });
+    }
+
+    let pwd = bcrypt.compareSync(
+      parametros.password_usuario,
+      usuario_buscado.password_usuario
+    );
+
+    if (!pwd) {
+      return res.status(401).json({
+        status: "Error",
+        message: "Invalid Password",
+      });
+    }
+
+    const token = jwt.createToken({
+      idUsuario: usuario_buscado.idUsuarios,
+      nombre_usuario: usuario_buscado.nombres_usuario,
+      email_usuario: usuario_buscado.email_usuario,
+      role_usuario: usuario_buscado.rol_usuario,
+    });
+    return res.status(200).json({
+      status: "Success",
+      message: "Login Successful",
+      user: {
+        email: usuario_buscado.email_usuario,
+        nombres: usuario_buscado.nombres_usuario,
+        rol: usuario_buscado.rol_usuario,
+      },
+      token,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "Error",
+      message: "Acceso denegado",
+      error: error.message,
+    });
+  }
 };
 
 const update = (req, res) => {
@@ -235,11 +255,5 @@ const getAll = (req, res) => {
 
 module.exports = {
   crear,
-  create,
   login,
-  update,
-  disable,
-  enable,
-  getProfile,
-  getAll,
 };
