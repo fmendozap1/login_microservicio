@@ -206,28 +206,6 @@ const enable = (req, res) => {
     });
 };
 
-//SHOWS PROFILE OF THE CURRENT USER LOGGED IN
-const getProfile = (req, res) => {
-  let userIdentity = req.user;
-
-  User.findById(userIdentity.id)
-    .select({ role: 0, password: 0 })
-    .exec()
-    .then((result) => {
-      if (result) {
-        return res.status(200).json({
-          status: "Success",
-          user: result,
-        });
-      } else {
-        return res.status(404).json({
-          status: "Error",
-          message: "User not found",
-        });
-      }
-    });
-};
-
 const getAll = (req, res) => {
   User.find({})
     .select({ role: 0, password: 0 })
