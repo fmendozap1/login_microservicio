@@ -59,11 +59,7 @@ const login = async (req, res) => {
   let parametros = req.body;
 
   try {
-    const usuario_buscado = await Usuarios.findOne({
-      where: {
-        email_usuario: parametros.email_usuario,
-      },
-    });
+    const usuario_buscado = await Usuarios.findOne({where: {email_usuario: parametros.email_usuario}});
 
     if (!usuario_buscado) {
       return res.status(404).json({
@@ -109,7 +105,35 @@ const login = async (req, res) => {
   }
 };
 
+const update2= async (req,res)=>{
+
+  let parametros=req.body;
+
+  try {
+    const usuario_buscado = await Usuarios.findOne({where: { email_usuario: parametros.email_usuario }});
+    
+    if (!usuario_buscado) {
+      return res.status(404).json({
+        status: "Error",
+        message: "User Not Found",
+      });
+    }
+
+    
+
+
+
+    
+  } catch (error) {
+    
+  }
+}
+
+
+
+
 const update = (req, res) => {
+ 
   let userIdentity = req.user;
   let userToUpdate = req.body;
   let user; //VARIABLE TO BE READ AFTER PASSWORD VALIDATION
