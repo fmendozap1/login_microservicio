@@ -1,9 +1,9 @@
-const User = require("../models/usuarioModel");
 const bcrypt = require("bcrypt");
 const jwt = require("../services/jwtService");
-const Usuarios = require("../models/usuarioModel");
+const Usuarios = require("../models/usuarioModel.js");
 const { Op } = require("sequelize");
 
+//crear usuario
 const crear = async (req, res) => {
   let parametros = req.body;
 
@@ -55,6 +55,8 @@ const crear = async (req, res) => {
   }
 };
 
+
+//login
 const login = async (req, res) => {
   let parametros = req.body;
 
@@ -105,12 +107,20 @@ const login = async (req, res) => {
   }
 };
 
-const update2= async (req,res)=>{
+//Actualizar
+const actualizar= async (req,res)=>{
 
+  //definimos variables a utilizar
   let parametros=req.body;
+  const name= parametros.nombres_usuario;
+  const email=parametros.email_usuario;
+  const password=parametros.password_usuario;
+  const rol=parametros.rol_usuario;
+  const estado=parametros.estado_usuario;
 
   try {
-    const usuario_buscado = await Usuarios.findOne({where: { email_usuario: parametros.email_usuario }});
+    //buscamos al usuario por medio del correo electronico
+    const usuario_buscado = await Usuarios.findOne({where: { email_usuario: email }});
     
     if (!usuario_buscado) {
       return res.status(404).json({
@@ -119,143 +129,123 @@ const update2= async (req,res)=>{
       });
     }
 
-    
+    //creamos los nuevos valores
+    const nuevos_valores= {}
 
+    if(name){
+      nuevos_valores.nombres_usuario=name;
+    }
+    if(rol){
+      nuevos_valores.rol_usuario=rol;
+    }
+    if(estado){
+      nuevos_valores.estado_usuario=estado;
+    }
+    if(password){
+      nuevos_valores.password_usuario= await bcrypt.hash(password, 10);
+    }
 
+    //remplaza o modifica los valores del primer parametro con los del segundo parametro
+    Object.assign(usuario_buscado,nuevos_valores);
+    //valido si se presentan cambios esto retorna un True or false
+    const modificacion=usuario_buscado.changed();
 
+    if(!modificacion || modificacion.length ===0){
+      return res.status(200).json({
+        status: "Success",
+        message: "No se detectaron cambios para actualizar",
+        data: usuario_buscado // Opcional: devolver datos actuales
+      });
+    }
+
+    //aqui es donde se guarda una vez se realizo la comprobacion de que se realizaron cambios sobre el usuario buscado
+    await usuario_buscado.save();
+
+    return res.status(200).json({
+      status: "Success",
+      message: "Usuario Actualizado",
+      user: {
+        email: usuario_buscado.email_usuario,
+        nombres: usuario_buscado.nombres_usuario,
+        rol: usuario_buscado.rol_usuario,
+      }
+    });
     
   } catch (error) {
-    
+    //error general
+    return res.status(500).json({
+      status: "Error",
+      message: "No fue posible agregar el usuario",
+      error: error.message,
+    });
   }
 }
 
 
-
-
-const update = (req, res) => {
- 
-  let userIdentity = req.user;
-  let userToUpdate = req.body;
-  let user; //VARIABLE TO BE READ AFTER PASSWORD VALIDATION
-
-  User.findOne({ _id: userIdentity.id })
-    .exec()
-    .then((result) => {
-      if (!result) {
-        return res.status(404).json({
-          status: "Error",
-          message: "User not found",
-        });
-      }
-      if (userToUpdate.password) {
-        bcrypt.hash(userToUpdate.password, 10, (error, pwd) => {
-          if (pwd) {
-            userToUpdate.password = pwd;
-            User.findByIdAndUpdate(userIdentity.id, userToUpdate)
-              .exec()
-              .then((result) => {
-                return res.status(200).json({
-                  status: "Success",
-                  message: "User and password updated",
-                });
-              });
-          }
-        });
-      } else {
-        User.findByIdAndUpdate(userIdentity.id, userToUpdate)
-          .exec()
-          .then((result) => {
-            return res.status(200).json({
-              status: "Success",
-              message: "User updated",
-            });
-          });
-      }
-    });
-};
-
-//INSTEAD OF DELETING THE USER, STATUS IS CHANGED TO 0
-const disable = (req, res) => {
-  let userToDisable = req.body.email;
-
-  User.findOne({ email: userToDisable })
-    .exec()
-    .then((result) => {
-      if (result) {
-        User.findByIdAndUpdate(result._id, { status: 0 })
-          .exec()
-          .then((disabledUser) => {
-            return res.status(200).json({
-              status: "Success",
-              message: "User was disabled",
-              user: disabledUser.email,
-            });
-          });
-      }
-    })
-    .catch((error) => {
-      return res.status(404).json({
+//listar
+const listar = async (req, res) => {
+  try {
+    const listado= await Usuarios.findAll();
+    if(!listado || listado.length==0){
+       return res.status(404).json({
         status: "Error",
-        message: "User Not Found",
-        user: disabledUser.email,
+        message: "No se encontraron usuarios.",
+        data: usuario_buscado // Opcional: devolver datos actuales
       });
+    }
+
+     return res.status(200).json({
+        status: "Success",
+        message: "Listado Generado Exitosamente",
+        data: listado // Opcional: devolver datos actuales
+      });
+
+  } catch (error) {
+     //error general
+    return res.status(500).json({
+      status: "Error",
+      message: "No fue posible listar los usuario",
+      error: error.message,
     });
+  }
 };
 
-//INSTEAD OF READDING THE USER, STATUS IS CHANGED TO 1
-const enable = (req, res) => {
-  let userToEnable = req.body.email;
-
-  User.findOne({ email: userToEnable })
-    .exec()
-    .then((result) => {
-      if (result) {
-        User.findByIdAndUpdate(result._id, { status: 1 })
-          .exec()
-          .then((enabledUser) => {
-            return res.status(200).json({
-              status: "Success",
-              message: "User was enabled",
-              user: enabledUser.email,
-            });
-          });
-      }
-    })
-    .catch((error) => {
-      return res.status(404).json({
+//eliminar
+const eliminar = async(req,res)=>{
+  try {
+    let parametros=req.body;
+    const usuarioEliminar= await Usuarios.findOne({where:{email_usuario:parametros.email_usuario}});
+    if(!usuarioEliminar){
+       return res.status(404).json({
         status: "Error",
-        message: "User Not Found",
-        user: enabledUser.email,
+        message: "No se encontro el usuario.",
+        data: usuario_buscado // Opcional: devolver datos actuales
       });
-    });
-};
+    }
 
-const getAll = (req, res) => {
-  User.find({})
-    .select({ role: 0, password: 0 })
-    .exec()
-    .then((result) => {
-      if (result) {
-        return res.status(200).json({
-          status: "Success",
-          user: result,
-        });
-      } else {
-        return res.status(404).json({
-          status: "Error",
-          message: "User not found",
-        });
-      }
-    })
-    .catch((error) => {
-      return res.status(404).json({
-        status: "Error",
-        message: "User not found",
+    //eliminar usuario el force garantiza que en realidad se elimina el registro
+    await usuarioEliminar.destroy(({ force: true }));
+
+    return res.status(200).json({
+        status: "Success",
+        message: "Usuario Eliminado Exitosamente"
       });
-    });
-};
 
+  } catch (error) {
+     //error general
+    return res.status(500).json({
+      status: "Error",
+      message: "No fue posible Eliminar el usuario",
+      error: error.message,
+    });
+  }
+}
+
+//exportamos metodos
 module.exports = {
   crear,
   login,
+  actualizar,
+  listar,
+  eliminar
 };

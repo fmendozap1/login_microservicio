@@ -3,6 +3,7 @@ const moment = require('moment');
 const { secret } = require('../services/jwtService');
 
 const authMiddleware = (req, res, next) => {
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -12,7 +13,9 @@ const authMiddleware = (req, res, next) => {
         });
     }
 
-    const token = authHeader.replace(/['"]+/g, '');
+    //const token = authHeader.replace(/['"]+/g, '');
+    // Extraer token correctamente (de "Bearer <token>")
+    const token = authHeader.split(' ')[1];
 
     try {
         const payload = jwt.decode(token, secret);
