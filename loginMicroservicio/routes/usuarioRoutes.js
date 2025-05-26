@@ -15,4 +15,13 @@ router.put('/update',authMiddleware, authorizeRole(['admin','Super Administrador
 //eliminar
 router.delete('/delete',authMiddleware, authorizeRole(['admin','Super Administrador']), usuarioController.eliminar);
 
+//esta ruta es para validar el token
+router.get('/validar-token', authMiddleware, (req, res) => {
+    res.status(200).json({
+        status: 'Success',
+        message: 'Token válido',
+        user: req.user
+    });
+});
+
 module.exports = router;
