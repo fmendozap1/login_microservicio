@@ -11,7 +11,7 @@ console.log("Start app")
 stablish_conection();
 
 const app=express();//crea una instancia de express
-const port=process.env.PORT || 3000;//se define el puerto usualmente el 3000
+const port=process.env.PORT;//se define el puerto usualmente el 3000
 
 app.use(cors());//crea la instancia del cors
 

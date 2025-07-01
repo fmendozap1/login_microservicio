@@ -1,6 +1,7 @@
 
 const Usuarios = require("../models/usuarioModel.js");
 const { Op } = require("sequelize");
+const bcrypt = require("bcrypt");
 
 //crear usuario
 const crear = async (req, res) => {

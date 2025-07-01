@@ -1,5 +1,6 @@
 const jwt = require("../services/jwtService");
 const bcrypt = require("bcrypt");
+const Usuarios = require("../models/usuarioModel.js");
 
 //login
 const login = async (req, res) => {
