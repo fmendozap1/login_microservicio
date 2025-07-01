@@ -8,16 +8,10 @@ const cors=require("cors");//cors para permitir peticiones cruzadas Cross-Origin
 
 console.log("Start app")
 
-console.log("DB:", process.env.DB);
-console.log("DB_USER:", process.env.DB_USER);
-console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_PORT:", process.env.DB_PORT);
-
 stablish_conection();
 
 const app=express();//crea una instancia de express
-const port=process.env.PORT;//se define el puerto usualmente el 3000
+const port=process.env.PORT || 3000;//se define el puerto usualmente el 3000
 
 app.use(cors());//crea la instancia del cors
 
