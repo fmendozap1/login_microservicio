@@ -9,4 +9,11 @@
 /dataSources/
 /dataSources.local.xml
 
+node_modules/
+.idea/
+.DS_Store
+build/
+nbproject/private/
+*.bkp
+
 .env*
